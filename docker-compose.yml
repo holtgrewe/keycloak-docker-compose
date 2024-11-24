@@ -1,0 +1,50 @@
+services:
+  keycloak:
+    image: quay.io/phasetwo/phasetwo-keycloak:${keycloak_version:-ERROR}
+    command: start
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - keycloak_network
+
+  postgres:
+    image: postgres:${postgres_version:-ERROR}
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - keycloak_network
+    healthcheck:
+      test: ["CMD-SHELL", "PGUSER=${POSTGRES_USER}", "PGPASSWORD=${POSTGRES_PASSWORD}", "pg_isready", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  keycloak_network:
+    # Explicit configuration of IPAM against use of collisions with
+    # internal 10.x.y.z IPs.
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.16.238.0/24"
