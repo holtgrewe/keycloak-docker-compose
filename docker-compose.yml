@@ -1,14 +1,17 @@
 services:
   keycloak:
     image: quay.io/phasetwo/phasetwo-keycloak:${keycloak_version:-ERROR}
+    volumes:
+      - ./utils/keycloak/healthcheck.sh:/usr/local/bin/healthcheck.sh
     command: start
     environment:
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT_BACKCHANNEL: false
       KC_HTTP_ENABLED: true
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
@@ -23,6 +26,11 @@ services:
     restart: unless-stopped
     networks:
       - keycloak_network
+    healthcheck:
+      test: /usr/local/bin/healthcheck.sh
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:${postgres_version:-ERROR}

@@ -16,6 +16,7 @@ POSTGRES_PASSWORD=keycloak_db_user_password
 
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=password
+KEYCLOAK_HOSTNAME=localhost
 
 # ===========================================================================
 # Image Configuration
